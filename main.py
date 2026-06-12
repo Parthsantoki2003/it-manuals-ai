@@ -118,27 +118,29 @@ class AuthenticatedRAGBot(dspy.Module):
 # =====================================================================
 # FASTAPI LIFESPAN STATE MANAGEMENT
 # =====================================================================
+
 bot_instance = None
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Initializes heavy models once on server startup."""
+def get_bot():
+    """Loads the heavy AI models ONLY when the first message is received."""
     global bot_instance
-    print("Initializing RAG resources and embedding models...")
+    if bot_instance is not None:
+        return bot_instance
+        
+    print("First request detected: Downloading and Loading AI Models...")
     
     # 1. Setup Language Model
     lm = dspy.LM("groq/llama-3.3-70b-versatile", api_key=os.getenv("GROQ_API_KEY"))
     
-    # 2. Setup Embedding Model matching database dimensions
+    # 2. Setup Embedding Model
     embedder = SentenceTransformer("all-MiniLM-L6-v2")
     def custom_vectorizer(queries):
-        if isinstance(queries, str): 
-            queries = [queries]
+        if isinstance(queries, str): queries = [queries]
         return embedder.encode(queries).tolist()
         
     # 3. Setup Qdrant Connection
     qdrant_client = QdrantClient(
-        url=os.getenv("QDRANT_CLOUD_URL"), 
+        url=os.getenv("QDRANT_URL"), 
         api_key=os.getenv("QDRANT_API_KEY")
     )
     
@@ -153,9 +155,9 @@ async def lifespan(app: FastAPI):
     
     dspy.configure(lm=lm, rm=retriever_model)
     bot_instance = AuthenticatedRAGBot()
-    print("Application state ready!")
-    yield
-    print("Shutting down and clearing resources...")
+    
+    print("AI Engine is locked and loaded!")
+    return bot_instance
 
 app = FastAPI(title="IT Manuals RAG API", lifespan=lifespan)
 
