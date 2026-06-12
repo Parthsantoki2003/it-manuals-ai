@@ -2,5 +2,6 @@ fastapi
 uvicorn
 pydantic
 dspy-ai
+dspy-qdrant
 qdrant-client
 sentence-transformers
