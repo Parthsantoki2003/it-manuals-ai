@@ -175,8 +175,9 @@ app.add_middleware(
 # =====================================================================
 @app.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(payload: ChatRequest):
-    if bot_instance is None:
-        raise HTTPException(status_code=503, detail="RAG Engine is starting up or unavailable.")
+    # Call the loader. It will pause to load models on the first run, 
+    # but run instantly on all future messages.
+    bot = get_bot() 
     
     try:
         # Convert incoming list of history objects to a single string for DSPy
@@ -188,8 +189,8 @@ async def chat_endpoint(payload: ChatRequest):
         # Pull only the last 6 entries to keep context window light
         history_string = "\n".join(formatted_history_list[-6:])
         
-        # Execute the DSPy pipeline
-        response = bot_instance(question=payload.question, history=history_string)
+        # Execute the DSPy pipeline using the 'bot' we just loaded
+        response = bot(question=payload.question, history=history_string)
         
         return ChatResponse(
             corrected_question=response.corrected_question,
@@ -199,10 +200,8 @@ async def chat_endpoint(payload: ChatRequest):
         )
         
     except Exception as e:
-        # --- ADD THIS LINE TO SEE THE ERROR IN YOUR TERMINAL ---
         import traceback
-        traceback.print_exc() 
-        # -------------------------------------------------------
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Internal Processing Error: {str(e)}")
 
 @app.get("/health")
