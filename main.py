@@ -122,29 +122,35 @@ class AuthenticatedRAGBot(dspy.Module):
 bot_instance = None
 
 def get_bot():
-    """Loads the heavy AI models ONLY when the first message is received."""
+    """Loads lightweight libraries and AI models ONLY on the first request."""
     global bot_instance
     if bot_instance is not None:
         return bot_instance
         
-    print("First request detected: Downloading and Loading AI Models...")
+    print("Wake up call received! Importing lightweight AI libraries...")
     
-    # 1. Setup Language Model
+    # Notice we swapped sentence_transformers for fastembed here
+    from fastembed import TextEmbedding
+    from qdrant_client import QdrantClient
+    from dspy_qdrant import QdrantRM
+    
+    print("Libraries imported. Connecting to models...")
+    
     lm = dspy.LM("groq/llama-3.3-70b-versatile", api_key=os.getenv("GROQ_API_KEY"))
     
-    # 2. Setup Embedding Model
-    embedder = SentenceTransformer("all-MiniLM-L6-v2")
+    # FastEmbed uses ONNX instead of PyTorch, saving ~300MB of RAM
+    embedder = TextEmbedding(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    
     def custom_vectorizer(queries):
         if isinstance(queries, str): queries = [queries]
-        return embedder.encode(queries).tolist()
+        # FastEmbed returns a generator, so we convert the arrays to a list of lists
+        return [vec.tolist() for vec in embedder.embed(queries)]
         
-    # 3. Setup Qdrant Connection
     qdrant_client = QdrantClient(
         url=os.getenv("QDRANT_URL"), 
         api_key=os.getenv("QDRANT_API_KEY")
     )
     
-    # 4. Configure Retriever
     retriever_model = QdrantRM(
         qdrant_collection_name="it_manuals",
         qdrant_client=qdrant_client,
@@ -155,8 +161,7 @@ def get_bot():
     
     dspy.configure(lm=lm, rm=retriever_model)
     bot_instance = AuthenticatedRAGBot()
-    
-    print("AI Engine is locked and loaded!")
+    print("AI Engine Ready!")
     return bot_instance
 
 app = FastAPI(title="IT Manuals RAG API")
