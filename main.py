@@ -159,7 +159,7 @@ def get_bot():
     print("AI Engine is locked and loaded!")
     return bot_instance
 
-app = FastAPI(title="IT Manuals RAG API", lifespan=lifespan)
+app = FastAPI(title="IT Manuals RAG API")
 
 app.add_middleware(
     CORSMiddleware,
