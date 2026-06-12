@@ -145,8 +145,8 @@ def get_bot():
         return [vec.tolist() for vec in embedder.embed(queries)]
         
     qdrant_client = QdrantClient(
-        url="https://4a77571c-30f5-4819-a25b-79905b09906e.us-west-1-0.aws.cloud.qdrant.io", 
-        api_key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIiwic3ViamVjdCI6ImFwaS1rZXk6Y2RjNzEzN2UtN2VmMC00ZDkwLWFiM2UtMTRjYjViNjU0NzJlIn0.Et6aAlTkL-z0H1PAc5IUmmNb-NLQ_vlJdMlCJmJvFYg"
+        url=os.getenv("QDRANT_CLOUD_URL"), 
+        api_key=os.getenv("QDRANT_API_KEY")
     )
     
     retriever_model = QdrantRM(
