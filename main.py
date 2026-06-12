@@ -1,12 +1,10 @@
 import os
-from contextlib import asynccontextmanager
 from typing import List, Optional
 import dspy
 from dspy_qdrant import QdrantRM
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from qdrant_client import QdrantClient
-from sentence_transformers import SentenceTransformer
 from fastapi.middleware.cors import CORSMiddleware
 
 # =====================================================================
