@@ -69,7 +69,7 @@ class AuthenticatedRAGBot(dspy.Module):
         self.generate_answer = dspy.ChainOfThought(GenerateChatAnswer)
         
         
-   def forward(self, question: str, history: str):
+    def forward(self, question: str, history: str):
         # 1. Fix typos
         clean_question = self.correct_typo(raw_question=question).corrected_question
         
