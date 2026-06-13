@@ -63,7 +63,7 @@ class GenerateChatAnswer(dspy.Signature):
     question = dspy.InputField()
     
     # This description acts as a final, inescapable formatting guardrail
-    answer = dspy.OutputField(desc="A heavily formatted markdown response with strict double line breaks (\\n\\n) between every point.")
+    answer = dspy.OutputField(desc="A heavily formatted markdown response with strict double line breaks (\n\n) between every point.")
 
 # =====================================================================
 # THE RAG BOT MODULE
