@@ -167,10 +167,10 @@ def get_bot():
     return bot_instance
 
 app = FastAPI(title="IT Manuals RAG API")
-
+origins = ["https://it-support-ai-agent.vercel.app"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=origins, 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
