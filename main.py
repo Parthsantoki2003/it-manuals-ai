@@ -1,10 +1,8 @@
 import os
-from typing import List, Optional
+from typing import List
 import dspy
-from dspy_qdrant import QdrantRM
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from qdrant_client import QdrantClient
 from fastapi.middleware.cors import CORSMiddleware
 
 # =====================================================================
@@ -70,7 +68,6 @@ class AuthenticatedRAGBot(dspy.Module):
         self.retrieve = dspy.Retrieve()
         self.generate_answer = dspy.ChainOfThought(GenerateChatAnswer)
 
-    # --- CHANGE 'history_str' TO 'history' HERE ---
     def forward(self, question: str, history: str):
         # 1. Fix typos
         clean_question = self.correct_typo(raw_question=question).corrected_question
@@ -80,7 +77,6 @@ class AuthenticatedRAGBot(dspy.Module):
         
         # Path A: Small Talk
         if 'smalltalk' in routing_decision or 'greet' in routing_decision:
-            # --- UPDATE TO USE 'history' ---
             casual_reply = self.handle_small_talk(history=history, question=clean_question)
             return dspy.Prediction(
                 context=[], 
@@ -104,7 +100,6 @@ class AuthenticatedRAGBot(dspy.Module):
         if not context:
             context = ["No relevant context found in the database."]
             
-        # --- UPDATE TO USE 'history' ---
         prediction = self.generate_answer(context=context, history=history, question=clean_question)
         return dspy.Prediction(
             context=context, 
@@ -116,7 +111,6 @@ class AuthenticatedRAGBot(dspy.Module):
 # =====================================================================
 # FASTAPI LIFESPAN STATE MANAGEMENT
 # =====================================================================
-
 bot_instance = None
 
 def get_bot():
@@ -127,21 +121,17 @@ def get_bot():
         
     print("Wake up call received! Importing lightweight AI libraries...")
     
-    # Notice we swapped sentence_transformers for fastembed here
     from fastembed import TextEmbedding
     from qdrant_client import QdrantClient
     from dspy_qdrant import QdrantRM
     
     print("Libraries imported. Connecting to models...")
     
-    lm = dspy.LM("groq/llama-3.3-70b-versatile", api_key=os.getenv("GROQ_API_KEY"))
-    
-    # FastEmbed uses ONNX instead of PyTorch, saving ~300MB of RAM
+    lm = dspy.LM("groq/llama-3.3-70b-instant", api_key=os.getenv("GROQ_API_KEY"))
     embedder = TextEmbedding(model_name="sentence-transformers/all-MiniLM-L6-v2")
     
     def custom_vectorizer(queries):
         if isinstance(queries, str): queries = [queries]
-        # FastEmbed returns a generator, so we convert the arrays to a list of lists
         return [vec.tolist() for vec in embedder.embed(queries)]
         
     qdrant_client = QdrantClient(
@@ -166,33 +156,26 @@ app = FastAPI(title="IT Manuals RAG API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, replace "*" with your actual frontend URL
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 # =====================================================================
 # API ENDPOINTS
 # =====================================================================
 @app.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(payload: ChatRequest):
-    # Call the loader. It will pause to load models on the first run, 
-    # but run instantly on all future messages.
     bot = get_bot() 
     
     try:
-        # Convert incoming list of history objects to a single string for DSPy
         formatted_history_list = []
         for msg in payload.history:
             role_label = "User" if msg.role.lower() == "user" else "Bot"
             formatted_history_list.append(f"{role_label}: {msg.text}")
         
-        # Pull only the last 6 entries to keep context window light
         history_string = "\n".join(formatted_history_list[-6:])
-        
-        # Execute the DSPy pipeline using the 'bot' we just loaded
         response = bot(question=payload.question, history=history_string)
         
         return ChatResponse(
