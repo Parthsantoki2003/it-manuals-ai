@@ -36,7 +36,14 @@ class ClassifyIntent(dspy.Signature):
     intent = dspy.OutputField(desc="Must be exactly one word: 'smalltalk' or 'it_question'")
 
 class SmallTalkResponse(dspy.Signature):
-    """Respond to casual conversation, greetings, or thanks in a friendly, helpful manner."""
+    """
+    You are an IT Support AI Assistant. The user is making casual small talk.
+    
+    CRITICAL RULES:
+    1. Acknowledge their greeting or remark politely but keep it extremely brief.
+    2. Do NOT engage in extended conversations about non-IT topics (e.g., weather, sports, philosophy).
+    3. ALWAYS gracefully steer the conversation back to your core purpose: helping them with technical issues and IT manuals."""
+    
     history = dspy.InputField()
     question = dspy.InputField()
     answer = dspy.OutputField()
