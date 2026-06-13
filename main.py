@@ -67,14 +67,21 @@ class AuthenticatedRAGBot(dspy.Module):
         self.handle_small_talk = dspy.Predict(SmallTalkResponse)
         self.retrieve = dspy.Retrieve()
         self.generate_answer = dspy.ChainOfThought(GenerateChatAnswer)
-
-    def forward(self, question: str, history: str):
+        
+        
+   def forward(self, question: str, history: str):
         # 1. Fix typos
         clean_question = self.correct_typo(raw_question=question).corrected_question
         
+        # --- ADD THESE LOG LINES HERE ---
+        print("================ TYPO DETECTION LOG ================")
+        print(f"RAW USER INPUT:      '{question}'")
+        print(f"CORRECTED BY LLM:    '{clean_question}'")
+        print("====================================================")
+        
         # 2. Route intent
         routing_decision = self.classify_intent(question=clean_question).intent.strip().lower()
-        
+
         # Path A: Small Talk
         if 'smalltalk' in routing_decision or 'greet' in routing_decision:
             casual_reply = self.handle_small_talk(history=history, question=clean_question)
