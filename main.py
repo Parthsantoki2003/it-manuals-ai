@@ -53,15 +53,17 @@ class GenerateChatAnswer(dspy.Signature):
     Analyze the retrieved context and conversation history to answer the question.
     
     CRITICAL FORMATTING RULES:
-    1. Do NOT reply in a single block paragraph.
-    2. Use bold Markdown headings (e.g., ### ## Section Name) to break down information.
-    3. Use organized bullet points or numbered lists for steps, features, or details.
-    4. Keep paragraphs short (maximum 2-3 sentences per point).
+    1. You MUST use markdown bullet points (-) or numbered lists (1., 2.).
+    2. You MUST put a double newline (\n\n) between every single bullet point, step, or paragraph.
+    3. NEVER write a single block of text. If you write a wall of text, you fail.
+    4. Use bold **Markdown headings** (e.g., ### Section Name) to break down information.
     """
     context = dspy.InputField(desc="Facts retrieved from the vector database")
     history = dspy.InputField()
     question = dspy.InputField()
-    answer = dspy.OutputField()
+    
+    # This description acts as a final, inescapable formatting guardrail
+    answer = dspy.OutputField(desc="A heavily formatted markdown response with strict double line breaks (\\n\\n) between every point.")
 
 # =====================================================================
 # THE RAG BOT MODULE
