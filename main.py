@@ -127,7 +127,7 @@ def get_bot():
     
     print("Libraries imported. Connecting to models...")
     
-    lm = dspy.LM("groq/llama-3.3-70b-instant", api_key=os.getenv("GROQ_API_KEY"))
+    lm = dspy.LM("groq/llama-3.3-70b-versatile", api_key=os.getenv("GROQ_API_KEY"))
     embedder = TextEmbedding(model_name="sentence-transformers/all-MiniLM-L6-v2")
     
     def custom_vectorizer(queries):
